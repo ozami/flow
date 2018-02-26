@@ -3,7 +3,7 @@ namespace Coroq;
 
 class Flow {
   /** @var array */
-  public $funcs;
+  public $funcs = [];
 
   /**
    * @param callable $func
