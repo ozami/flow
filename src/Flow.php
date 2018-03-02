@@ -66,31 +66,6 @@ class Flow {
   }
   
   /**
-   * @param string $which_param
-   * @param string $dir
-   * @return callable
-   */
-  public static function mapToFile($which_param, $dir) {
-    $dir = rtrim($dir, "/");
-    return function(array $params) use ($which_param, $dir) {
-      $path = static::digArray($params, $which_param);
-      $path = ltrim($path, "/");
-      // dot-dot not allowed
-      if (strstr("/$path", "/../") !== false) {
-        throw new \LogicException();
-      }
-      $path = "$dir/$path";
-      // force extension to .php
-      $path = preg_replace("#[.][^.]+$#", "", $path) . ".php";
-      if (!is_file($path)) {
-        return $params;
-      }
-      $func = include $path;
-      return static::invoke($func, $params);
-    };
-  }
-  
-  /**
    * @param callable $func
    * @param array $params
    * @return array
