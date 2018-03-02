@@ -16,7 +16,7 @@ class Flow {
   
   /**
    * @param array $params
-   * @return array|null|void
+   * @return array
    */
   public function __invoke(array $params) {
     foreach ($this->funcs as $func) {
@@ -27,7 +27,7 @@ class Flow {
   
   /**
    * @param array $params
-   * @return array|null|void
+   * @return array
    */
   public function run(array $params) {
     return $this->__invoke($params);
