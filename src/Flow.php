@@ -20,7 +20,7 @@ class Flow {
    */
   public function __invoke(array $params) {
     foreach ($this->funcs as $func) {
-      $params = static::invoke($func, $params);
+      $params = static::call($func, $params);
     }
     return $params;
   }
@@ -59,7 +59,7 @@ class Flow {
     return function(array $params) use ($which_param, $rx, $func) {
       $param = static::digArray($params, $which_param);
       if (preg_match($rx, $param)) {
-        $params = static::invoke($func, $params);
+        $params = static::call($func, $params);
       }
       return $params;
     };
@@ -70,7 +70,7 @@ class Flow {
    * @param array $params
    * @return array
    */
-  public static function invoke($func, array $params) {
+  public static function call($func, array $params) {
     if (!is_callable($func)) {
       throw new \LogicException();
     }

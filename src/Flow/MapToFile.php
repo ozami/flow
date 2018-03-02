@@ -51,7 +51,7 @@ class MapToFile {
         return $next($params, $prev);
       };
     }, $func);
-    return Flow::invoke($func, $params);
+    return Flow::call($func, $params);
   }
   
   
@@ -63,7 +63,7 @@ class MapToFile {
     $dir_hook_file = "$dir/__dir__.php";
     if (!is_file($dir_hook_file)) {
       return function(array $params, $next) {
-        return Flow::invoke($next, $params);
+        return Flow::call($next, $params);
       };
     }
     $dir_hook = include $dir_hook_file;
