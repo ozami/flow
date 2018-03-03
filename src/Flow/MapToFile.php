@@ -3,9 +3,12 @@ namespace Coroq\Flow;
 use \Coroq\Flow;
 
 class MapToFile {
+  /** @var string */
   public $which_param;
+
+  /** @var string */
   public $dir;
-  
+
   /**
    * @param string $which_param
    * @param string $dir
@@ -14,7 +17,7 @@ class MapToFile {
     $this->which_param = $which_param;
     $this->dir = rtrim($dir, "/");
   }
-  
+
   /**
    * @param array $params
    * @return array
@@ -53,7 +56,6 @@ class MapToFile {
     }, $func);
     return Flow::call($func, $params);
   }
-  
   
   /**
    * @param string $dir
