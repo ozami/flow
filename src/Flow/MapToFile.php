@@ -49,11 +49,12 @@ class MapToFile {
       throw new \LogicException();
     }
     // wrap file function with directory hooks
-    $func = array_reduce($dir_hooks, function($prev, $next) {
-      return function(array $params) use ($prev, $next) {
-        return $next($params, $prev);
+    foreach ($dir_hooks as $key => $dir_hook) {
+      $direct = $key == 0;
+      $func = function(array $params) use ($func, $dir_hook, $direct) {
+        return (array)call_user_func($dir_hook, $params, $func, $direct) + $params;
       };
-    }, $func);
+    }
     return Flow::call($func, $params);
   }
   
