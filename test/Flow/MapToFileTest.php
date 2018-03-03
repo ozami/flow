@@ -46,4 +46,11 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
       ],
     ] + $params, $result);
   }
+
+  /**
+   * @expectedException LogicException
+   */
+  public function testRootDirectoryDoesNotExist() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/not-exist");
+  }
 }

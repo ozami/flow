@@ -16,6 +16,9 @@ class MapToFile {
   public function __construct($which_param, $dir) {
     $this->which_param = $which_param;
     $this->dir = rtrim($dir, "/");
+    if (!is_dir($this->dir)) {
+      throw new \LogicException("The map root directory '$this->dir' does not exist");
+    }
   }
 
   /**
@@ -45,7 +48,7 @@ class MapToFile {
     $dir_hooks = array_reverse($dir_hooks);
     // load a function from the file
     $func = include "$this->dir/$path";
-    if (!is_callable($func)) {
+      if (!is_callable($func)) {
       throw new \LogicException();
     }
     // wrap file function with directory hooks
