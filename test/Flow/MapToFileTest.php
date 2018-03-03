@@ -53,4 +53,46 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
   public function testRootDirectoryDoesNotExist() {
     $map = new MapToFile("path", __DIR__ . "/MapToFile/not-exist");
   }
+
+  public function testIntermediateDirectoryDoesNotExist() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/has-dir-hooks");
+    $params = ["path" => "/dir1/not-exist/file.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals([
+      "out" => [
+        "root-before()",
+        "dir1-before(1)",
+        "dir1-after",
+        "root-after",
+      ],
+    ] + $params, $result);
+  }
+
+  public function testFuncFileDoesNotExist() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/has-dir-hooks");
+    $params = ["path" => "/dir1/dir2/not-exist.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals([
+      "out" => [
+        "root-before()",
+        "dir1-before()",
+        "dir2-before(1)",
+        "dir2-after",
+        "dir1-after",
+        "root-after",
+      ],
+    ] + $params, $result);
+  }
+
+  public function testFuncFileInRootDoesNotExist() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/has-dir-hooks");
+    $params = ["path" => "/not-exist.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals([
+      "out" => [
+        "root-before(1)",
+        "root-after",
+      ],
+    ] + $params, $result);
+  }
 }

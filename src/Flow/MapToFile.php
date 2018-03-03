@@ -34,22 +34,27 @@ class MapToFile {
     if (basename($path) == "__dir__.php") {
       return $params;
     }
-    // do nothing if the file specified with $path does not exist
-    if (!is_file("$this->dir/$path")) {
-      return $params;
-    }
     // load directory hooks
     $current = $this->dir;
     $dir_hooks = [];
     foreach (explode("/", $path) as $i) {
+      if (!is_dir($current)) {
+        break;
+      }
       $dir_hooks[] = $this->loadDirectoryHook($current);
       $current .= "/$i";
     }
     $dir_hooks = array_reverse($dir_hooks);
     // load a function from the file
-    $func = include "$this->dir/$path";
+    $func_file = "$this->dir/$path";
+    if (is_file($func_file)) {
+      $func = include $func_file;
       if (!is_callable($func)) {
-      throw new \LogicException();
+        throw new \LogicException("$func_file did not return callable");
+      }
+    }
+    else {
+      $func = function() {};
     }
     // wrap file function with directory hooks
     foreach ($dir_hooks as $key => $dir_hook) {
