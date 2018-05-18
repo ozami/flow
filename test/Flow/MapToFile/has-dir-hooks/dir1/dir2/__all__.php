@@ -1,8 +1,8 @@
 <?php
 
 return function(array $params, $next) {
-  $params["out"][] = "root-dir-begin";
+  $params["out"][] = "dir2-all-begin";
   $params = Coroq\Flow::call($next, $params);
-  $params["out"][] = "root-dir-end";
+  $params["out"][] = "dir2-all-end";
   return $params;
 };

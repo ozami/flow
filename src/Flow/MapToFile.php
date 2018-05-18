@@ -30,58 +30,50 @@ class MapToFile {
     $path = $this->resolveDots($path);
     // force extension to .php
     $path = preg_replace("#[.][^.]+$#", "", $path) . ".php";
-    // ignore direct access to __dir__.php
-    if (basename($path) == "__dir__.php") {
+    // ignore direct access to __dir__.php and __all__.php
+    $basename = basename($path);
+    if ($basename == "__dir__.php" || $basename == "__all__.php") {
       return $params;
     }
-    // load directory hooks
-    $current = $this->dir;
-    $dir_hooks = [];
-    foreach (explode("/", $path) as $i) {
-      if (!is_dir($current)) {
-        break;
-      }
-      $dir_hooks[] = $this->loadDirectoryHook($current);
-      $current .= "/$i";
-    }
-    $dir_hooks = array_reverse($dir_hooks);
-    // load a function from the file
-    $func_file = "$this->dir/$path";
-    if (is_file($func_file)) {
-      $func = include $func_file;
-      if (!is_callable($func)) {
-        throw new \LogicException("$func_file did not return callable");
-      }
-    }
-    else {
-      $func = function() {};
-    }
-    // wrap file function with directory hooks
-    foreach ($dir_hooks as $key => $dir_hook) {
-      $direct = $key == 0;
-      $func = function(array $params) use ($func, $dir_hook, $direct) {
-        return (array)call_user_func($dir_hook, $params, $func, $direct) + $params;
+    // build hook function tree
+    $func = function() {};
+    foreach ($this->loadHooksInPath($path) as $hook) {
+      $func = function(array $params) use ($func, $hook) {
+        return (array)call_user_func($hook, $params, $func) + $params;
       };
     }
     return Flow::call($func, $params);
   }
   
   /**
-   * @param string $dir
+   * @param string $path
+   * @return array
+   */
+  public function loadHooksInPath($path) {
+    $current = $this->dir;
+    $hooks = [];
+    foreach (explode("/", $path) as $i) {
+      $hooks[] = "$current/__all__.php";
+      $current .= "/$i";
+    }
+    $hooks[] = dirname("$this->dir/$path") . "/__dir__.php";
+    $hooks[] = "$this->dir/$path";
+    $hooks = array_reverse($hooks);
+    $hooks = array_filter($hooks, "is_file");
+    $hooks = array_map([$this, "loadFunctionFromFile"], $hooks);
+    return $hooks;
+  }
+
+  /**
+   * @param string path
    * @return callable
    */
-  public function loadDirectoryHook($dir) {
-    $dir_hook_file = "$dir/__dir__.php";
-    if (!is_file($dir_hook_file)) {
-      return function(array $params, $next) {
-        return Flow::call($next, $params);
-      };
+  public function loadFunctionFromFile($path) {
+    $func = include $path;
+    if (!is_callable($func)) {
+      throw new \LogicException("Function from $path is not callable");
     }
-    $dir_hook = include $dir_hook_file;
-    if (!is_callable($dir_hook)) {
-      throw new \LogicException();
-    }
-    return $dir_hook;
+    return $func;
   }
   
   /**

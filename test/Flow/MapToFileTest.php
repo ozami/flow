@@ -17,15 +17,17 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals($params + ["out" => "file"], $result);
   }
   
-  public function testLoadDirectoryHookFromJustOneLevelDeep() {
+  public function testLoadHookFromJustOneLevelDeep() {
     $map = new MapToFile("path", __DIR__ . "/MapToFile/has-dir-hooks/dir1/dir2");
     $params = ["path" => "/file.php", "out" => []];
     $result = $map($params);
     $this->assertEquals([
       "out" => [
-        "dir2-before(1)",
+        "dir2-all-begin",
+        "dir2-dir-begin",
         "file",
-        "dir2-after",
+        "dir2-dir-end",
+        "dir2-all-end",
       ],
     ] + $params, $result);
   }
@@ -36,13 +38,15 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $result = $map($params);
     $this->assertEquals([
       "out" => [
-        "root-before()",
-        "dir1-before()",
-        "dir2-before(1)",
+        "root-all-begin",
+        "dir1-all-begin",
+        "dir2-all-begin",
+        "dir2-dir-begin",
         "file",
-        "dir2-after",
-        "dir1-after",
-        "root-after",
+        "dir2-dir-end",
+        "dir2-all-end",
+        "dir1-all-end",
+        "root-all-end",
       ],
     ] + $params, $result);
   }
@@ -60,10 +64,10 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $result = $map($params);
     $this->assertEquals([
       "out" => [
-        "root-before()",
-        "dir1-before(1)",
-        "dir1-after",
-        "root-after",
+        "root-all-begin",
+        "dir1-all-begin",
+        "dir1-all-end",
+        "root-all-end",
       ],
     ] + $params, $result);
   }
@@ -74,12 +78,14 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $result = $map($params);
     $this->assertEquals([
       "out" => [
-        "root-before()",
-        "dir1-before()",
-        "dir2-before(1)",
-        "dir2-after",
-        "dir1-after",
-        "root-after",
+        "root-all-begin",
+        "dir1-all-begin",
+        "dir2-all-begin",
+        "dir2-dir-begin",
+        "dir2-dir-end",
+        "dir2-all-end",
+        "dir1-all-end",
+        "root-all-end",
       ],
     ] + $params, $result);
   }
@@ -90,8 +96,10 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $result = $map($params);
     $this->assertEquals([
       "out" => [
-        "root-before(1)",
-        "root-after",
+        "root-all-begin",
+        "root-dir-begin",
+        "root-dir-end",
+        "root-all-end",
       ],
     ] + $params, $result);
   }
