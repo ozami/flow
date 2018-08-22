@@ -68,13 +68,17 @@ class Flow {
   /**
    * @param callable $func
    * @param array $params
+   * @param callable|null $next
    * @return array
    */
-  public static function call($func, array $params) {
+  public static function call($func, array $params, $next = null) {
     if (!is_callable($func)) {
-      throw new \LogicException();
+      throw new \LogicException("Not callable");
     }
-    $result = call_user_func($func, $params);
+    $result = call_user_func($func, $params, $next);
+    if ($result instanceof \Closure) {
+      $result = $result($params);
+    }
     if (!is_array($result) && !is_null($result)) {
       throw new \LogicException();
     }

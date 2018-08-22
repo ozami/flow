@@ -39,7 +39,7 @@ class MapToFile {
     $func = function() {};
     foreach ($this->loadHooksInPath($path) as $hook) {
       $func = function(array $params) use ($func, $hook) {
-        return (array)call_user_func($hook, $params, $func) + $params;
+        return Flow::call($hook, $params, $func);
       };
     }
     return Flow::call($func, $params);
