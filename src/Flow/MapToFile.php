@@ -65,7 +65,7 @@ class MapToFile {
   }
 
   /**
-   * @param string path
+   * @param string $path
    * @return callable
    */
   public function loadFunctionFromFile($path) {
