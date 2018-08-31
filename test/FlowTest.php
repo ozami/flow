@@ -42,4 +42,56 @@ class FlowTest extends PHPUnit_Framework_TestCase {
       "all" => $params,
     ], $result);
   }
+
+  /**
+   * @expectedException DomainException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionReturnsString() {
+    $flow = new Flow();
+    $flow
+      ->to(function($params) {
+        return "test";
+      })
+      ->run([]);
+  }
+
+  /**
+   * @expectedException DomainException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionReturnsObject() {
+    $flow = new Flow();
+    $flow
+      ->to(function($params) {
+        return new \stdClass();
+      })
+      ->run([]);
+  }
+
+  /**
+   * @expectedException DomainException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionReturnsClosureThatReturnsString() {
+    $flow = new Flow();
+    $flow
+      ->to(function($params) {
+        return function($params) {
+          return "test";
+        };
+      })
+      ->run([]);
+  }
+
+  /**
+   * @expectedException DomainException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionReturnsClosureThatReturnsObject() {
+    $flow = new Flow();
+    $flow
+      ->to(function($params) {
+        return function($params) {
+          return new \stdClass();
+        };
+      })
+      ->run([]);
+  }
 }

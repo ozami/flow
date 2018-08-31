@@ -73,14 +73,17 @@ class Flow {
    */
   public static function call($func, array $params, $next = null) {
     if (!is_callable($func)) {
-      throw new \LogicException("Not callable");
+      throw new \InvalidArgumentException("The flow function is not callable");
     }
     $result = call_user_func($func, $params, $next);
     if ($result instanceof \Closure) {
       $result = $result($params);
     }
     if (!is_array($result) && !is_null($result)) {
-      throw new \LogicException();
+      throw new \DomainException(
+        "The flow function must return array or null. "
+        . gettype($result) . " returned."
+      );
     }
     return (array)$result + $params;
   }
