@@ -28,25 +28,6 @@ class FlowTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals($result["x"], 2);
   }
 
-  public function testNameParams() {
-    $flow = new Flow();
-    $params = [
-      "x" => "x",
-      "y" => ["yy" => "yy", "z" => "z"],
-    ];
-    $result = $flow
-      ->to(Flow::nameParams(["x", "y", "y/z"], function($x, $y, $z, $all) {
-        return compact("x", "y", "z", "all");
-      }))
-      ->run($params);
-    $this->assertSame([
-      "x" => $params["x"],
-      "y" => $params["y"],
-      "z" => $params["y"]["z"],
-      "all" => $params,
-    ], $result);
-  }
-
   public function testFlowCanCallFunctionNameString() {
     $flow = new Flow();
     $result = $flow

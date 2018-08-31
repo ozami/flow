@@ -13,7 +13,7 @@ class Flow {
     $this->funcs[] = $func;
     return $this;
   }
-  
+
   /**
    * @param array $params
    * @return array
@@ -24,7 +24,7 @@ class Flow {
     }
     return $params;
   }
-  
+
   /**
    * @param array $params
    * @return array
@@ -32,39 +32,7 @@ class Flow {
   public function run(array $params) {
     return $this->__invoke($params);
   }
-  
-  /**
-   * @param array $param_defs
-   * @param callable $func
-   * @return callable
-   */
-  public static function nameParams(array $param_defs, $func) {
-    return function(array $params) use ($param_defs, $func) {
-      $named_params = [];
-      foreach ($param_defs as $def) {
-        $named_params[] = static::digArray($params, $def);
-      }
-      $named_params[] = $params;
-      return call_user_func_array($func, $named_params);
-    };
-  }
-  
-  /**
-   * @param string $which_param
-   * @param string $rx
-   * @param callable $func
-   * @return callable
-   */
-  public static function ifMatches($which_param, $rx, $func) {
-    return function(array $params) use ($which_param, $rx, $func) {
-      $param = static::digArray($params, $which_param);
-      if (preg_match($rx, $param)) {
-        $params = static::call($func, $params);
-      }
-      return $params;
-    };
-  }
-  
+
   /**
    * @param callable $func
    * @param array $params
@@ -87,7 +55,7 @@ class Flow {
     }
     return (array)$result + $params;
   }
-  
+
   /**
    * @param array $a
    * @param string $path
