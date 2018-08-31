@@ -104,6 +104,25 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     ] + $params, $result);
   }
 
+  public function testRequestForSpecialFileNamesAreIgnored() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/has-dir-hooks");
+    $params = ["path" => "/__dir__.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals($params, $result);
+
+    $params = ["path" => "/dir1/__dir__.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals($params, $result);
+
+    $params = ["path" => "/__all__.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals($params, $result);
+
+    $params = ["path" => "/dir1/__all__.php", "out" => []];
+    $result = $map($params);
+    $this->assertEquals($params, $result);
+  }
+
   /**
    * @expectedException DomainException
    */
