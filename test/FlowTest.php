@@ -1,6 +1,10 @@
 <?php
 use Coroq\Flow;
 
+function test_flow_function() {
+  return ["test_flow_function" => true];
+}
+
 class FlowTest extends PHPUnit_Framework_TestCase {
   public function testEmptyFlowReturnsParamsAsPassed() {
     $flow = new Flow();
@@ -8,7 +12,7 @@ class FlowTest extends PHPUnit_Framework_TestCase {
     $result = $flow($params);
     $this->assertSame($params, $result);
   }
-  
+
   public function testRunCallsAllFunctions() {
     $flow = new Flow();
     $result = $flow
@@ -23,7 +27,7 @@ class FlowTest extends PHPUnit_Framework_TestCase {
       ->run(["x" => 0]);
     $this->assertEquals($result["x"], 2);
   }
-  
+
   public function testNameParams() {
     $flow = new Flow();
     $params = [
@@ -41,6 +45,36 @@ class FlowTest extends PHPUnit_Framework_TestCase {
       "z" => $params["y"]["z"],
       "all" => $params,
     ], $result);
+  }
+
+  public function testFlowCanCallFunctionNameString() {
+    $flow = new Flow();
+    $result = $flow
+      ->to("test_flow_function")
+      ->run([]);
+    $this->assertSame([
+      "test_flow_function" => true,
+    ], $result);
+  }
+
+  /**
+   * @expectedException InvalidArgumentException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionWasNull() {
+    $flow = new Flow();
+    $flow
+      ->to(null)
+      ->run([]);
+  }
+
+  /**
+   * @expectedException InvalidArgumentException
+   */
+  public function testFlowThrowsExceptionWhenFlowFunctionWasNotCallableString() {
+    $flow = new Flow();
+    $flow
+      ->to("non_existing_function")
+      ->run([]);
   }
 
   /**
