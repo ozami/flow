@@ -130,4 +130,24 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     $map = new MapToFile("path", __DIR__ . "/MapToFile/");
     $map->loadFunctionFromFile(__DIR__ . "/MapToFile/return_nothing.php");
   }
+
+  public function testResolveDots() {
+    $map = new MapToFile("path", __DIR__ . "/MapToFile/");
+    $this->assertSame(
+      $map->resolveDots("//test1//test2//test3///..//"),
+      "test1/test2"
+    );
+    $this->assertSame(
+      $map->resolveDots("././test1/.test2/././"),
+      "test1/.test2"
+    );
+    $this->assertSame(
+      $map->resolveDots("../test1/..test2/test3/.."),
+      "test1/..test2"
+    );
+    $this->assertSame(
+      $map->resolveDots(".//..//test1//test2/./..//.//test3//"),
+      "test1/test3"
+    );
+  }
 }
