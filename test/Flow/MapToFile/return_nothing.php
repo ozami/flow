@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * @codeCoverageIgnore
+ */
 function(array $params) {
   
 };
