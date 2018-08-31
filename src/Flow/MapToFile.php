@@ -71,7 +71,7 @@ class MapToFile {
   public function loadFunctionFromFile($path) {
     $func = include $path;
     if (!is_callable($func)) {
-      throw new \LogicException("Function from $path is not callable");
+      throw new \DomainException("Function read from $path is not callable");
     }
     return $func;
   }
