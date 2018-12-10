@@ -1,6 +1,6 @@
 <?php
 
-return function(array $params) {
+return function(array $params, callable $next) {
   $params["out"][] = "file";
-  return $params;
+  return $next($params);
 };

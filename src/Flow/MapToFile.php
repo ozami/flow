@@ -4,47 +4,49 @@ use \Coroq\Flow;
 
 class MapToFile {
   /** @var string */
-  public $which_param;
+  private $dir;
 
-  /** @var string */
-  public $dir;
+  /** @var callable */
+  private $getPath;
 
   /**
-   * @param string $which_param
    * @param string $dir
+   * @param callable $getPath
    */
-  public function __construct($which_param, $dir) {
-    $this->which_param = $which_param;
+  public function __construct($dir, callable $getPath) {
     $this->dir = rtrim($dir, "/");
     if (!is_dir($this->dir)) {
-      throw new \LogicException("The map root directory '$this->dir' does not exist");
+      throw new \InvalidArgumentException(
+        "The map root directory '$this->dir' does not exist"
+      );
     }
+    $this->getPath = $getPath;
   }
 
   /**
-   * @param array $params
+   * @param array $args
+   * @param callable $next
    * @return array
    */
-  public function __invoke(array $params) {
-    $path = Flow::digArray($params, $this->which_param);
+  public function __invoke(array $args, callable $next) {
+    $path = call_user_func($this->getPath, $args);
     $path = $this->resolveDots($path);
-    // force extension to .php
+    // change the extension to .php
     $path = preg_replace("#[.][^.]+$#", "", $path) . ".php";
     // ignore direct access to __dir__.php and __all__.php
     $basename = basename($path);
     if ($basename == "__dir__.php" || $basename == "__all__.php") {
-      return $params;
+      return $next($args);
     }
-    // build hook function tree
-    $func = function() {};
+    // build hook flow
+    $flow = new Flow();
     foreach ($this->loadHooksInPath($path) as $hook) {
-      $func = function(array $params) use ($func, $hook) {
-        return Flow::call($hook, $params, $func);
-      };
+      $flow->to($hook);
     }
-    return Flow::call($func, $params);
+    $result = $flow->run($args);
+    return $next($result);
   }
-  
+
   /**
    * @param string $path
    * @return array
@@ -58,7 +60,6 @@ class MapToFile {
     }
     $hooks[] = dirname("$this->dir/$path") . "/__dir__.php";
     $hooks[] = "$this->dir/$path";
-    $hooks = array_reverse($hooks);
     $hooks = array_filter($hooks, "is_file");
     $hooks = array_map([$this, "loadFunctionFromFile"], $hooks);
     return $hooks;
@@ -75,7 +76,7 @@ class MapToFile {
     }
     return $func;
   }
-  
+
   /**
    * Resolve dot and dot-dot and slash-slash in path
    * @param string $path

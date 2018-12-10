@@ -1,5 +1,5 @@
 <?php
 
-return function(array $params) {
-  return ["out" => "file"];
+return function(array $params, callable $next) {
+  return $next(["out" => "file"] + $params);
 };

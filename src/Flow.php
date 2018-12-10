@@ -3,69 +3,89 @@ namespace Coroq;
 
 class Flow {
   /** @var array */
-  public $funcs = [];
+  private $funcs = [];
 
   /**
    * @param callable $func
    * @return self
    */
-  public function to($func) {
+  public function to(callable $func) {
     $this->funcs[] = $func;
     return $this;
   }
 
   /**
-   * @param array $params
+   * @param array $args
+   * @param callable|null $next
    * @return array
    */
-  public function __invoke(array $params) {
-    foreach ($this->funcs as $func) {
-      $params = static::call($func, $params);
+  public function __invoke(array $args = [], callable $next = null) {
+    $funcs = $this->funcs;
+    if ($next) {
+      $funcs[] = $next;
     }
-    return $params;
+    $call = function(array $args) use (&$call, &$funcs) {
+      if (!$funcs) {
+        return $args;
+      }
+      $func = array_shift($funcs);
+      $result = call_user_func($func, $args, $call);
+      if (!is_array($result)) {
+        $type = gettype($result);
+        throw new \DomainException(
+          "The flow function must return an array. ($type returned)"
+        );
+      }
+      return $result;
+    };
+    return $call($args);
   }
 
   /**
-   * @param array $params
+   * @param array $args
+   * @param callable|null $next
    * @return array
    */
-  public function run(array $params) {
-    return $this->__invoke($params);
+  public function run(array $args = [], callable $next = null) {
+    return $this->__invoke($args, $next);
   }
 
   /**
    * @param callable $func
-   * @param array $params
-   * @param callable|null $next
-   * @return array
+   * @return self
    */
-  public static function call($func, array $params, $next = null) {
-    if (!is_callable($func)) {
-      throw new \InvalidArgumentException("The flow function is not callable");
-    }
-    $result = call_user_func($func, $params, $next);
-    if ($result instanceof \Closure) {
-      $result = $result($params);
-    }
-    if (!is_array($result) && !is_null($result)) {
-      throw new \DomainException(
-        "The flow function must return array or null. "
-        . gettype($result) . " returned."
-      );
-    }
-    return (array)$result + $params;
+  public function toV3(callable $func) {
+    return $this->to(static::v3($func));
   }
 
   /**
-   * @param array $a
-   * @param string $path
-   * @return mixed
+   * @param callable $func
+   * @return \Closure
    */
-  public static function digArray(array $a, $path) {
-    $path = explode("/", $path);
-    foreach ($path as $node) {
-      $a = @$a[$node];
+  public static function v3(callable $func) {
+    return function(array $args, callable $next) use ($func) {
+      return $next(static::call($func, $args, $next));
+    };
+  }
+
+  /**
+   * For version 3 compatibility
+   * @param callable $func
+   * @param array $args
+   * @param callable|null $next
+   * @return array
+   */
+  public static function call($func, array $args, $next = null) {
+    $result = call_user_func($func, $args, $next);
+    if (!is_array($result) && is_callable($result)) {
+      $result = $result($args);
     }
-    return $a;
+    if (!is_array($result) && !is_null($result)) {
+      $type = gettype($result);
+      throw new \DomainException(
+        "The v3 flow function must return an array or null. ($type returned)"
+      );
+    }
+    return (array)$result + $args;
   }
 }

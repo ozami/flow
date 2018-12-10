@@ -2,7 +2,7 @@
 
 return function(array $params, $next) {
   $params["out"][] = "root-dir-begin";
-  $params = $next($params);
+  $params = Coroq\Flow::call($next, $params);
   $params["out"][] = "root-dir-end";
   return $params;
 };

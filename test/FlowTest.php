@@ -1,8 +1,25 @@
 <?php
 use Coroq\Flow;
 
-function test_flow_function() {
-  return ["test_flow_function" => true];
+function test_flow_function($args, $next) {
+  return $next(["test_flow_function" => true] + $args);
+}
+
+class PushToArray {
+  public function __construct($value) {
+    $this->value = $value;
+  }
+  public function run($args, $next) {
+    $args["x"][] = $this->value;
+    return $next($args);
+  }
+}
+
+function pushToArray($value) {
+  return function($args, $next) use ($value) {
+    $args["x"][] = $value;
+    return $next($args);
+  };
 }
 
 class FlowTest extends PHPUnit_Framework_TestCase {
@@ -13,49 +30,42 @@ class FlowTest extends PHPUnit_Framework_TestCase {
     $this->assertSame($params, $result);
   }
 
-  public function testRunCallsAllFunctions() {
-    $flow = new Flow();
-    $result = $flow
-      ->to(function($params) {
-        $params["x"] += 1;
-        return $params;
-      })
-      ->to(function($params) {
-        $params["x"] += 1;
-        return $params;
-      })
-      ->run(["x" => 0]);
-    $this->assertEquals($result["x"], 2);
+  public function testFlowCallsAllFunctionsInOrder() {
+    $result = (new Flow())
+      ->to(pushToArray(0))
+      ->to(pushToArray(1))
+      ->run(["x" => []]);
+    $this->assertEquals(["x" => [0, 1]], $result);
   }
 
   public function testFlowCanCallFunctionNameString() {
-    $flow = new Flow();
-    $result = $flow
+    $result = (new Flow())
       ->to("test_flow_function")
-      ->run([]);
+      ->run();
     $this->assertSame([
       "test_flow_function" => true,
     ], $result);
   }
 
-  /**
-   * @expectedException InvalidArgumentException
-   */
-  public function testFlowThrowsExceptionWhenFlowFunctionWasNull() {
-    $flow = new Flow();
-    $flow
-      ->to(null)
-      ->run([]);
+  public function testArrayCallable() {
+    $result = (new Flow())
+      ->to(pushToArray(0))
+      ->to([new PushToArray(1), "run"])
+      ->to(pushToArray(2))
+      ->run();
+    $this->assertSame(["x" => [0, 1, 2]], $result);
   }
 
-  /**
-   * @expectedException InvalidArgumentException
-   */
-  public function testFlowThrowsExceptionWhenFlowFunctionWasNotCallableString() {
-    $flow = new Flow();
-    $flow
-      ->to("non_existing_function")
-      ->run([]);
+  public function testFlowToFlow() {
+    $sub_flow = (new Flow())
+      ->to(pushToArray(1))
+      ->to(pushToArray(2));
+    $result = (new Flow())
+      ->to(pushToArray(0))
+      ->to($sub_flow)
+      ->to(pushToArray(3))
+      ->run(["x" => []]);
+    $this->assertSame(["x" => [0, 1, 2, 3]], $result);
   }
 
   /**
@@ -82,31 +92,65 @@ class FlowTest extends PHPUnit_Framework_TestCase {
       ->run([]);
   }
 
-  /**
-   * @expectedException DomainException
-   */
-  public function testFlowThrowsExceptionWhenFlowFunctionReturnsClosureThatReturnsString() {
-    $flow = new Flow();
-    $flow
-      ->to(function($params) {
-        return function($params) {
-          return "test";
+  public function testV3() {
+    $result = (new Flow())
+      ->to(Flow::v3(function($args) {
+        return ["abc" => "abc"];
+      }))
+      ->to(Flow::v3(function($args) {
+        return ["def" => "def"];
+      }))
+      ->to(Flow::v3(function($args) {
+        return;
+      }))
+      ->run();
+    $this->assertEquals($result, [
+      "abc" => "abc",
+      "def" => "def",
+    ]);
+  }
+
+  public function testV3OnTheFlowFunctionReturnsFunction() {
+    $result = (new Flow())
+      ->to(pushToArray(0))
+      ->to(Flow::v3(function() {
+        return function($args) {
+          $x = $args["x"];
+          $x[] = 1;
+          return compact("x");
         };
-      })
-      ->run([]);
+      }))
+      ->to(pushToArray(2))
+      ->run();
+    $this->assertSame(["x" => [0, 1, 2]], $result);
   }
 
   /**
    * @expectedException DomainException
    */
-  public function testFlowThrowsExceptionWhenFlowFunctionReturnsClosureThatReturnsObject() {
-    $flow = new Flow();
-    $flow
-      ->to(function($params) {
-        return function($params) {
-          return new \stdClass();
-        };
+  public function testV3ThrowsExceptionWhenFlowFunctionReturnsString() {
+    $result = (new Flow())
+      ->to(Flow::v3(function($args) {
+        return "test";
+      }))
+      ->run();
+  }
+
+  public function testToV3() {
+    $result = (new Flow())
+      ->toV3(function($args) {
+        return ["abc" => "abc"];
       })
-      ->run([]);
+      ->toV3(function($args) {
+        return ["def" => "def"];
+      })
+      ->toV3(function($args) {
+        return;
+      })
+      ->run();
+    $this->assertEquals($result, [
+      "abc" => "abc",
+      "def" => "def",
+    ]);
   }
 }
