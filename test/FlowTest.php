@@ -81,6 +81,17 @@ class FlowTest extends PHPUnit_Framework_TestCase {
     $this->assertSame(["x" => [0, 1, 2, 3]], $result);
   }
 
+  public function testEarlyReturn() {
+    $result = (new Flow())
+      ->to(pushToArray(0))
+      ->to(function($args) {
+        return $args;
+      })
+      ->to(pushToArray(1))
+      ->run(["x" => []]);
+    $this->assertSame(["x" => [0]], $result);
+  }
+
   /**
    * @expectedException DomainException
    */

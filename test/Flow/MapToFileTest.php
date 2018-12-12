@@ -53,6 +53,19 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
     ] + $params, $result);
   }
 
+  public function testEarlyReturn() {
+    $map = new MapToFile(__DIR__ . "/MapToFile/has-dir-hooks", "getPath");
+    $params = ["path" => "/early-return/file.php", "out" => []];
+    $result = $map($params, "asis");
+    $this->assertEquals([
+      "out" => [
+        "root-all-begin",
+        "early-return-dir",
+        "root-all-end",
+      ],
+    ] + $params, $result);
+  }
+
   /**
    * @expectedException LogicException
    */
