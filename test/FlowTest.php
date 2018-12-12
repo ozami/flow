@@ -22,6 +22,19 @@ function pushToArray($value) {
   };
 }
 
+function returnString() {
+  return "test";
+}
+
+class ReturnString {
+  public function __invoke() {
+    return "test";
+  }
+  public function run() {
+    return "test";
+  }
+}
+
 class FlowTest extends PHPUnit_Framework_TestCase {
   public function testEmptyFlowReturnsParamsAsPassed() {
     $flow = new Flow();
@@ -78,6 +91,48 @@ class FlowTest extends PHPUnit_Framework_TestCase {
         return "test";
       })
       ->run([]);
+  }
+
+  public function testFlowThrowsExceptionWithFunctionDetail() {
+    $rx = "#^.+ defined in .+\\([0-9]+\\)#";
+    // closure
+    try {
+      (new Flow())
+        ->to(function($params) {
+          return "test";
+        })
+        ->run();
+    }
+    catch (\DomainException $e) {
+      $this->assertRegExp($rx, $e->getMessage());
+    }
+    // function name string
+    try {
+      (new Flow())
+        ->to("returnString")
+        ->run();
+    }
+    catch (\DomainException $e) {
+      $this->assertRegExp($rx, $e->getMessage());
+    }
+    // __invoke()able object
+    try {
+      (new Flow())
+        ->to(new ReturnString())
+        ->run();
+    }
+    catch (\DomainException $e) {
+      $this->assertRegExp($rx, $e->getMessage());
+    }
+    // array
+    try {
+      (new Flow())
+        ->to([new ReturnString(), "run"])
+        ->run();
+    }
+    catch (\DomainException $e) {
+      $this->assertRegExp($rx, $e->getMessage());
+    }
   }
 
   /**

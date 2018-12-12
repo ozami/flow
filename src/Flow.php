@@ -31,10 +31,14 @@ class Flow {
       $func = array_shift($funcs);
       $result = call_user_func($func, $args, $call);
       if (!is_array($result)) {
-        $type = gettype($result);
-        throw new \DomainException(
-          "The flow function must return an array. ($type returned)"
-        );
+        $ref = $this->reflectionCallable($func);
+        throw new \DomainException(sprintf(
+          "%s defined in %s(%s) returned %s. (Flow function must return an array)",
+          $ref->getName(),
+          $ref->getFileName(),
+          $ref->getStartLine(),
+          getType($result)
+        ));
       }
       return $result;
     };
@@ -48,6 +52,23 @@ class Flow {
    */
   public function run(array $args = [], callable $next = null) {
     return $this->__invoke($args, $next);
+  }
+
+  /**
+   * @param callable $callable
+   * @return \ReflectionFunctionAbstract
+   */
+  private function reflectionCallable($callable) {
+    if (is_array($callable)) {
+      return new \ReflectionMethod($callable[0], $callable[1]);
+    }
+    if ($callable instanceof \Closure) {
+      return new \ReflectionFunction($callable);
+    }
+    if (is_object($callable)) {
+      return new \ReflectionMethod($callable, "__invoke");
+    }
+    return new \ReflectionFunction($callable);
   }
 
   /**
