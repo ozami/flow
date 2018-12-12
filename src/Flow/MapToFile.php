@@ -43,8 +43,8 @@ class MapToFile {
     foreach ($this->loadHooksInPath($path) as $hook) {
       $flow->to($hook);
     }
-    $result = $flow->run($args);
-    return $next($result);
+    $flow->to($next);
+    return $flow->run($args);
   }
 
   /**

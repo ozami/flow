@@ -1,6 +1,6 @@
 <?php
-
 use Coroq\Flow\MapToFile;
+use Coroq\Flow;
 
 require_once __DIR__ . "/utils.php";
 
@@ -64,6 +64,38 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
         "root-all-end",
       ],
     ] + $params, $result);
+  }
+
+  public function testCallingNextFlow() {
+    $map = new MapToFile(__DIR__ . "/MapToFile/has-dir-hooks", "getPath");
+    $args = ["path" => "/early-return/file.php", "out" => []];
+    $result = (new Flow())
+      ->to($map)
+      ->to(function($args, $next) {
+        $args["out"][] = "next flow";
+        return $next($args);
+      })
+      ->run($args);
+    $this->assertEquals([
+      "out" => [
+        "root-all-begin",
+        "early-return-dir",
+        "root-all-end",
+      ],
+    ] + $args, $result);
+  }
+
+  public function testDoNotCallNextFlowOnEarlyReturn() {
+    $map = new MapToFile(__DIR__ . "/MapToFile/file-only/dir1/dir2", "getPath");
+    $args = ["path" => "file.php"];
+    $result = (new Flow())
+      ->to($map)
+      ->to(function($args, $next) {
+        $args["out"] .= ", next flow";
+        return $next($args);
+      })
+      ->run($args);
+    $this->assertEquals(["out" => "file, next flow"] + $args, $result);
   }
 
   /**
