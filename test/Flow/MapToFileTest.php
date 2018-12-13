@@ -97,6 +97,19 @@ class MapToFileTest extends PHPUnit_Framework_TestCase {
       ->run($args);
     $this->assertEquals(["out" => "file, next flow"] + $args, $result);
   }
+  
+  public function testFunctionReturned() {
+    $map = new MapToFile(__DIR__ . "/MapToFile/", "getPath");
+    $args = ["path" => "/has-dir-hooks/return-function/file.php"];
+    $result = $map($args, "asis");
+    $this->assertEquals([
+      "out" => [
+        "root-all-begin",
+        "inner",
+        "root-all-end",
+      ],
+    ] + $args, $result);
+  }
 
   /**
    * @expectedException LogicException

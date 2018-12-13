@@ -29,7 +29,13 @@ class Flow {
         return $args;
       }
       $func = array_shift($funcs);
-      $result = call_user_func($func, $args, $call);
+      while (true) {
+        $result = call_user_func($func, $args, $call);
+        if (!is_callable($result)) {
+          break;
+        }
+        $func = $result;
+      }
       if (!is_array($result)) {
         $ref = $this->reflectionCallable($func);
         throw new \DomainException(sprintf(
