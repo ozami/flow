@@ -64,7 +64,7 @@ class Flow {
    * @param callable $callable
    * @return \ReflectionFunctionAbstract
    */
-  private function reflectionCallable($callable) {
+  private function reflectionCallable(callable $callable) {
     if (is_array($callable)) {
       return new \ReflectionMethod($callable[0], $callable[1]);
     }
@@ -74,7 +74,12 @@ class Flow {
     if (is_object($callable)) {
       return new \ReflectionMethod($callable, "__invoke");
     }
-    return new \ReflectionFunction($callable);
+    if (is_string($callable)) {
+      return new \ReflectionFunction($callable);
+    }
+    // @codeCoverageIgnoreStart
+    throw new \LogicException("Unknown type of callable. " . gettype($callable));
+    // @codeCoverageIgnoreEnd
   }
 
   /**
