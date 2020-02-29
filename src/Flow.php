@@ -1,123 +1,45 @@
 <?php
 namespace Coroq;
 
-class Flow {
+class Flow implements FlowFunctionInterface {
   /** @var array */
-  private $funcs = [];
+  private $functions;
 
   /**
-   * @param callable $func
+   * Constructor
+   */
+  public function __construct() {
+    $this->functions = [];
+  }
+
+  /**
+   * Execute all child flow functions
+   * @param array $arguments
+   * @return array result of all flow functions
+   */
+  public function __invoke(array $arguments = []) {
+    foreach ($this->functions as $function) {
+      $arguments = FlowFunction::call($function, $arguments);
+    }
+    return $arguments;
+  }
+
+  /**
+   * Alias of __invoke()
+   * @param array $arguments
+   * @return array result of all flow functions
+   */
+  public function run(array $arguments = []) {
+    return $this->__invoke($arguments);
+  }
+
+  /**
+   * Add flow function
+   * @param callable $function
    * @return self
    */
-  public function to(callable $func) {
-    $this->funcs[] = $func;
+  public function to(callable $function) {
+    $this->functions[] = $function;
     return $this;
-  }
-
-  /**
-   * @param array $args
-   * @param callable|null $next
-   * @return array
-   */
-  public function __invoke(array $args = [], callable $next = null) {
-    $funcs = $this->funcs;
-    if ($next) {
-      $funcs[] = $next;
-    }
-    $call = function(array $args) use (&$call, &$funcs) {
-      if (!$funcs) {
-        return $args;
-      }
-      $func = array_shift($funcs);
-      while (true) {
-        $result = call_user_func($func, $args, $call);
-        if (!is_callable($result)) {
-          break;
-        }
-        $func = $result;
-      }
-      if (!is_array($result)) {
-        $ref = $this->reflectionCallable($func);
-        throw new \DomainException(sprintf(
-          "%s defined in %s(%s) returned %s. (Flow function must return an array)",
-          $ref->getName(),
-          $ref->getFileName(),
-          $ref->getStartLine(),
-          getType($result)
-        ));
-      }
-      return $result;
-    };
-    return $call($args);
-  }
-
-  /**
-   * @param array $args
-   * @param callable|null $next
-   * @return array
-   */
-  public function run(array $args = [], callable $next = null) {
-    return $this->__invoke($args, $next);
-  }
-
-  /**
-   * @param callable $callable
-   * @return \ReflectionFunctionAbstract
-   */
-  private function reflectionCallable(callable $callable) {
-    if (is_array($callable)) {
-      return new \ReflectionMethod($callable[0], $callable[1]);
-    }
-    if ($callable instanceof \Closure) {
-      return new \ReflectionFunction($callable);
-    }
-    if (is_object($callable)) {
-      return new \ReflectionMethod($callable, "__invoke");
-    }
-    if (is_string($callable)) {
-      return new \ReflectionFunction($callable);
-    }
-    // @codeCoverageIgnoreStart
-    throw new \LogicException("Unknown type of callable. " . gettype($callable));
-    // @codeCoverageIgnoreEnd
-  }
-
-  /**
-   * @param callable $func
-   * @return self
-   */
-  public function toV3(callable $func) {
-    return $this->to(static::v3($func));
-  }
-
-  /**
-   * @param callable $func
-   * @return \Closure
-   */
-  public static function v3(callable $func) {
-    return function(array $args, callable $next) use ($func) {
-      return $next(static::call($func, $args, $next));
-    };
-  }
-
-  /**
-   * For version 3 compatibility
-   * @param callable $func
-   * @param array $args
-   * @param callable|null $next
-   * @return array
-   */
-  public static function call($func, array $args, $next = null) {
-    $result = call_user_func($func, $args, $next);
-    if (!is_array($result) && is_callable($result)) {
-      $result = $result($args);
-    }
-    if (!is_array($result) && !is_null($result)) {
-      $type = gettype($result);
-      throw new \DomainException(
-        "The v3 flow function must return an array or null. ($type returned)"
-      );
-    }
-    return (array)$result + $args;
   }
 }

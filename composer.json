@@ -21,6 +21,6 @@
         }
     },
     "scripts": {
-        "test": "phpunit -c ."
+        "test": "@php vendor/bin/phpunit -c ."
     }
 }
