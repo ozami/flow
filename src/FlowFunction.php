@@ -27,14 +27,7 @@ class FlowFunction implements FlowFunctionInterface {
       $result = $function($arguments);
     }
     else {
-      try {
-        $reflection = static::reflectionCallable($function);
-      }
-      catch (\ReflectionException $exception) {
-        throw new \BadMethodCallException(
-          $exception->getMessage()
-        );
-      }
+      $reflection = static::reflectionCallable($function);
       $named_arguments = [];
       foreach ($reflection->getParameters() as $parameter) {
         $parameter_name = $parameter->getName();
