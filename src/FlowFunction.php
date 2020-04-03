@@ -24,22 +24,20 @@ class FlowFunction implements FlowFunctionInterface {
       return $arguments;
     }
     if ($function instanceof FlowFunctionInterface) {
-      $result = $function($arguments);
+      return $function($arguments);
     }
-    else {
-      $reflection = static::reflectionCallable($function);
-      $named_arguments = [];
-      foreach ($reflection->getParameters() as $parameter) {
-        $parameter_name = $parameter->getName();
-        if ($parameter_name == "arguments") {
-          $named_arguments[] = $arguments;
-        }
-        else {
-          $named_arguments[] = @$arguments[$parameter_name];
-        }
+    $reflection = static::reflectionCallable($function);
+    $named_arguments = [];
+    foreach ($reflection->getParameters() as $parameter) {
+      $parameter_name = $parameter->getName();
+      if ($parameter_name == "arguments") {
+        $named_arguments[] = $arguments;
       }
-      $result = call_user_func_array($function, $named_arguments);
+      else {
+        $named_arguments[] = @$arguments[$parameter_name];
+      }
     }
+    $result = call_user_func_array($function, $named_arguments);
     if (!is_array($result) && !is_null($result)) {
       throw new \DomainException(sprintf(
         "%s defined in %s(%s) returned %s. (Flow function must return an array or null)",
