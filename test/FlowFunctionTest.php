@@ -4,70 +4,63 @@ require_once __DIR__ . "/sample.php";
 use Coroq\FlowFunction;
 
 class FlowFunctionTest extends PHPUnit_Framework_TestCase {
-  public function testPassingNull() {
-    $flowFunction = new FlowFunction(null);
-    $arguments = ["x" => 1];
-    $result = $flowFunction($arguments);
-    $this->assertSame($arguments, $result);
-  }
-  
-  public function testPassingEmptyFunction() {
-    $flowFunction = new FlowFunction("emptyFunction");
+  public function testMakeFlowFunctionFromEmptyFunction() {
+    $flowFunction = FlowFunction::make("emptyFunction");
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testPassingEmptyClosure() {
-    $flowFunction = new FlowFunction(function() {});
+  public function testMakeFlowFunctionFromEmptyClosure() {
+    $flowFunction = FlowFunction::make(function() {});
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testPassingEmptyMethod() {
+  public function testMakeFlowFunctionFromEmptyMethod() {
     $object = new EmptyClass();
-    $flowFunction = new FlowFunction([$object, "emptyMethod"]);
+    $flowFunction = FlowFunction::make([$object, "emptyMethod"]);
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testPassingEmptyStaticMethod() {
+  public function testMakeFlowFunctionFromEmptyStaticMethod() {
     $object = new EmptyClass();
-    $flowFunction = new FlowFunction([$object, "emptyStaticMethod"]);
+    $flowFunction = FlowFunction::make([$object, "emptyStaticMethod"]);
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
 
-    $flowFunction = new FlowFunction(["EmptyClass", "emptyStaticMethod"]);
+    $flowFunction = FlowFunction::make(["EmptyClass", "emptyStaticMethod"]);
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
 
-    $flowFunction = new FlowFunction("EmptyClass::emptyStaticMethod");
+    $flowFunction = FlowFunction::make("EmptyClass::emptyStaticMethod");
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testPassingEmptyCallableObject() {
+  public function testMakeFlowFunctionFromEmptyCallableObject() {
     $object = new EmptyCallableClass();
-    $flowFunction = new FlowFunction($object);
+    $flowFunction = FlowFunction::make($object);
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testPassingEmptyFlowFunction() {
-    $flowFunction = new FlowFunction(new FlowFunction(function() {
+  public function testMakeFlowFunctionFromEmptyFlowFunction() {
+    $flowFunction = FlowFunction::make(FlowFunction::make(function() {
     }));
     $arguments = ["x" => 1];
     $result = $flowFunction($arguments);
     $this->assertSame($arguments, $result);
   }
 
-  public function testArgumentsBinding() {
+  public function testFlowFunctionArgumentsBinding() {
     $test = $this;
-    $flowFunction = new FlowFunction(function($x, $y, $arguments) use ($test) {
+    $flowFunction = FlowFunction::make(function($x, $y, $arguments) use ($test) {
       $test->assertSame(1, $x);
       $test->assertSame(2, $y);
       $test->assertSame(["x" => 1, "y" => 2], $arguments);
@@ -75,9 +68,9 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     $result = $flowFunction(["x" => 1, "y" => 2]);
   }
 
-  public function testNullArgumentsBinding() {
+  public function testFlowFunctionNullArgumentsBinding() {
     $test = $this;
-    $flowFunction = new FlowFunction(function($x, $y, $arguments) use ($test) {
+    $flowFunction = FlowFunction::make(function($x, $y, $arguments) use ($test) {
       $test->assertSame(null, $x);
       $test->assertSame(null, $y);
       $test->assertSame([], $arguments);
@@ -85,9 +78,9 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     $result = $flowFunction([]);
   }
 
-  public function testArgumentsBindingWithNestedFlowFunctions() {
+  public function testFlowFunctionArgumentsBindingWithNestedFlowFunction() {
     $test = $this;
-    $flowFunction = new FlowFunction(new FlowFunction(function($x, $y, $arguments) use ($test) {
+    $flowFunction = FlowFunction::make(FlowFunction::make(function($x, $y, $arguments) use ($test) {
       $test->assertSame(1, $x);
       $test->assertSame(2, $y);
       $test->assertSame(["x" => 1, "y" => 2], $arguments);
@@ -95,41 +88,41 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     $result = $flowFunction(["x" => 1, "y" => 2]);
   }
 
-  public function testAssignment() {
-    $flowFunction = new FlowFunction(function($x) {
+  public function testAssignmentInFlowFunction() {
+    $flowFunction = FlowFunction::make(function($x) {
       return ["x" => 1];
     });
     $result = $flowFunction([]);
     $this->assertSame(["x" => 1], $result);
   }
 
-  public function testOverwrite() {
-    $flowFunction = new FlowFunction(function($x) {
+  public function testOverwriteInFlowFunction() {
+    $flowFunction = FlowFunction::make(function($x) {
       return ["x" => 2];
     });
     $result = $flowFunction(["x" => 1]);
     $this->assertSame(["x" => 2], $result);
   }
 
-  public function testOverwriteWithNull() {
-    $flowFunction = new FlowFunction(function($x) {
+  public function testOverwriteWithNullInFlowFunction() {
+    $flowFunction = FlowFunction::make(function($x) {
       return ["x" => null];
     });
     $result = $flowFunction(["x" => 1]);
     $this->assertSame(["x" => null], $result);
   }
 
-  public function testAdd() {
-    $flowFunction = new FlowFunction(function($x, $y) {
+  public function testAdditionInFlowFunction() {
+    $flowFunction = FlowFunction::make(function($x, $y) {
       return ["x" => 1];
     });
     $result = $flowFunction(["y" => 2]);
     $this->assertSame(["x" => 1, "y" => 2], $result);
   }
-  
+
   public function testFlowFunctionThrowsExceptionWhenStringReturned() {
     try {
-      $flowFunction = new FlowFunction(function() {
+      $flowFunction = FlowFunction::make(function() {
         return "test";
       });
       $flowFunction();
@@ -137,5 +130,29 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     catch (\DomainException $e) {
       $this->assertRegExp("#^.+ defined in .+\\([0-9]+\\)#", $e->getMessage());
     }
+  }
+
+  public function testFlowFunctionCanCallPrivateMethod() {
+    $object = new HasPrivateMethod();
+    $result = $object->callPrivateMethod(["x" => "_"]);
+    $this->assertSame(["x" => "_privateMethod"], $result);
+  }
+
+  public function testFlowFunctionCanCallPrivateStaticMethod() {
+    $object = new HasPrivateMethod();
+    $result = $object->callPrivateStaticMethod(["x" => "_"]);
+    $this->assertSame(["x" => "_privateStaticMethod"], $result);
+  }
+
+  public function testFlowFunctionCanCallProtectedMethod() {
+    $object = new InheritedProtectedMethod();
+    $result = $object->callProtectedMethod(["x" => "_"]);
+    $this->assertSame(["x" => "_protectedMethod"], $result);
+  }
+
+  public function testFlowFunctionCanCallProtectedStaticMethod() {
+    $object = new InheritedProtectedMethod();
+    $result = $object->callProtectedStaticMethod(["x" => "_"]);
+    $this->assertSame(["x" => "_protectedStaticMethod"], $result);
   }
 }

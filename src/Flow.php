@@ -1,7 +1,7 @@
 <?php
 namespace Coroq;
 
-class Flow implements FlowFunctionInterface {
+class Flow {
   /** @var array */
   private $functions;
 
@@ -38,7 +38,7 @@ class Flow implements FlowFunctionInterface {
    * @param callable $function
    * @return self
    */
-  public function to(callable $function) {
+  public function to($function) {
     $this->functions[] = $function;
     return $this;
   }

@@ -1,32 +1,62 @@
 <?php
 namespace Coroq;
 
-class FlowFunction implements FlowFunctionInterface {
-  /** @var callable */
-  private $function;
-
+class FlowFunction {
   /**
-   * Constructor
-   * @param callable|null $function normal function
+   * Make a flow function from a normal function
+   * @param callable $function
+   * @return \Closure flow function
    */
-  public function __construct(callable $function = null) {
-    $this->function = $function;
+  public static function make($function) {
+    return makeFlowFunction($function);
   }
 
   /**
-   * Execute flow function
+   * Make a flow function from normal function and call it
+   * @param callable $function
    * @param array $arguments
-   * @return array result of the flow function
+   * @return array return value of the flow function
    */
-  public function __invoke(array $arguments = []) {
-    $function = $this->function;
-    if ($function === null) {
-      return $arguments;
+  public static function call($function, array $arguments = []) {
+    $flow = static::make($function);
+    return $flow($arguments);
+  }
+
+  /**
+   * @param callable $callable
+   * @return \ReflectionFunctionAbstract
+   */
+  public static function reflectionCallable($callable) {
+    if (is_array($callable)) {
+      return new \ReflectionMethod($callable[0], $callable[1]);
     }
-    if ($function instanceof FlowFunctionInterface) {
-      return $function($arguments);
+    if ($callable instanceof \Closure) {
+      return new \ReflectionFunction($callable);
     }
-    $reflection = static::reflectionCallable($function);
+    if (is_object($callable)) {
+      return new \ReflectionMethod($callable, "__invoke");
+    }
+    if (is_string($callable)) {
+      if (strpos($callable, "::") === false) {
+        return new \ReflectionFunction($callable);
+      }
+      return new \ReflectionMethod($callable);
+    }
+    // @codeCoverageIgnoreStart
+    throw new \LogicException("Unknown type of callable. " . gettype($callable));
+    // @codeCoverageIgnoreEnd
+  }
+}
+
+/**
+ * Workaround for PHP 5
+ * Use FlowFunction::make() instead.
+ * @param callable $function
+ * @return \Closure flow function
+ */
+function makeFlowFunction($function) {
+  $reflection = FlowFunction::reflectionCallable($function);
+  return function(array $arguments = []) use ($function, $reflection) {
     $named_arguments = [];
     foreach ($reflection->getParameters() as $parameter) {
       $parameter_name = $parameter->getName();
@@ -48,52 +78,5 @@ class FlowFunction implements FlowFunctionInterface {
       ));
     }
     return (array)$result + $arguments;
-  }
-
-  /**
-   * Make a flow function from a normal function
-   * @param callable $function
-   * @return FlowFunctionInterface flow function
-   */
-  public static function make(callable $function) {
-    if ($function instanceof FlowFunctionInterface) {
-      return $function;
-    }
-    return new FlowFunction($function);
-  }
-
-  /**
-   * Call function as a flow function
-   * @param array $arguments
-   * @return array return value of the flow function
-   */
-  public static function call($function, array $arguments = []) {
-    $flow = static::make($function);
-    return $flow($arguments);
-  }
-
-  /**
-   * @param callable $callable
-   * @return \ReflectionFunctionAbstract
-   */
-  private static function reflectionCallable(callable $callable) {
-    if (is_array($callable)) {
-      return new \ReflectionMethod($callable[0], $callable[1]);
-    }
-    if ($callable instanceof \Closure) {
-      return new \ReflectionFunction($callable);
-    }
-    if (is_object($callable)) {
-      return new \ReflectionMethod($callable, "__invoke");
-    }
-    if (is_string($callable)) {
-      if (strpos($callable, "::") === false) {
-        return new \ReflectionFunction($callable);
-      }
-      return new \ReflectionMethod($callable);
-    }
-    // @codeCoverageIgnoreStart
-    throw new \LogicException("Unknown type of callable. " . gettype($callable));
-    // @codeCoverageIgnoreEnd
-  }
+  };
 }
