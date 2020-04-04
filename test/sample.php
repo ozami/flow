@@ -60,7 +60,7 @@ class HasProtectedMethod {
     $x .= "protectedMethod";
     return compact("x");
   }
-  protected function protectedStaticMethod($x) {
+  protected static function protectedStaticMethod($x) {
     $x .= "protectedStaticMethod";
     return compact("x");
   }
