@@ -3,6 +3,10 @@ require_once __DIR__ . "/sample.php";
 
 use Coroq\FlowFunction;
 
+/**
+ * @covers Coroq\FlowFunction
+ * @covers Coroq\makeFlowFunction
+ */
 class FlowFunctionTest extends PHPUnit_Framework_TestCase {
   public function testMakeFlowFunctionFromEmptyFunction() {
     $flowFunction = FlowFunction::make("emptyFunction");
@@ -126,6 +130,7 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
         return "test";
       });
       $flowFunction();
+      $this->assertTrue(false);
     }
     catch (\DomainException $e) {
       $this->assertRegExp("#^.+ defined in .+\\([0-9]+\\)#", $e->getMessage());
@@ -154,5 +159,36 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     $object = new InheritedProtectedMethod();
     $result = $object->callProtectedStaticMethod(["x" => "_"]);
     $this->assertSame(["x" => "_protectedStaticMethod"], $result);
+  }
+
+  public function testFlowFunctionDoesntTakeNext() {
+    $flowFunction = FlowFunction::make(function($x) {
+      return ["x" => 1];
+    });
+    $next = function($arguments) {
+      $this->assertSame(["x" => 1], $arguments);
+      return ["next_called" => "ok"];
+    };
+    $result = $flowFunction([], $next);
+    $this->assertSame(["next_called" => "ok"], $result);
+  }
+
+  public function testFlowFunctionTakesNext() {
+    $flowFunction = FlowFunction::make(function($x, $next) {
+      return $next(["x" => 1]);
+    });
+    $next = function($arguments) {
+      $this->assertSame(["x" => 1], $arguments);
+      return ["next_called" => "ok"];
+    };
+    $result = $flowFunction([], $next);
+    $this->assertSame(["next_called" => "ok"], $result);
+  }
+
+  public function testCall() {
+    $result = FlowFunction::call(function($x) {
+      return ["y" => 2];
+    }, ["x" => 1]);
+    $this->assertSame(["y" => 2, "x" => 1], $result);
   }
 }

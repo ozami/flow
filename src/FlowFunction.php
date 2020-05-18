@@ -50,18 +50,24 @@ class FlowFunction {
 
 /**
  * Workaround for PHP 5
+ * @see https://bugs.php.net/bug.php?id=68792
  * Use FlowFunction::make() instead.
  * @param callable $function
  * @return \Closure flow function
  */
 function makeFlowFunction($function) {
-  $reflection = FlowFunction::reflectionCallable($function);
-  return function(array $arguments = []) use ($function, $reflection) {
+  return function(array $arguments = [], callable $next = null) use ($function) {
+    $reflection = FlowFunction::reflectionCallable($function);
     $named_arguments = [];
+    $take_next = false;
     foreach ($reflection->getParameters() as $parameter) {
       $parameter_name = $parameter->getName();
       if ($parameter_name == "arguments") {
         $named_arguments[] = $arguments;
+      }
+      elseif ($parameter_name == "next") {
+        $take_next = true;
+        $named_arguments[] = $next;
       }
       else {
         $named_arguments[] = @$arguments[$parameter_name];
@@ -77,6 +83,10 @@ function makeFlowFunction($function) {
         gettype($result)
       ));
     }
-    return (array)$result + $arguments;
+    $result = (array)$result + $arguments;
+    if (!$take_next && $next) {
+      $result = $next($result);
+    }
+    return $result;
   };
 }

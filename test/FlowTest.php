@@ -3,6 +3,9 @@ require_once __DIR__ . "/sample.php";
 
 use Coroq\Flow;
 
+/**
+ * @covers Coroq\Flow
+ */
 class FlowTest extends PHPUnit_Framework_TestCase {
   public function testEmptyFlowReturnsArgumentsAsPassed() {
     $flow = new Flow();
