@@ -53,7 +53,6 @@ class FlowFunction {
  * @see https://bugs.php.net/bug.php?id=68792
  * Use FlowFunction::make() instead.
  * @param callable $function
- * @param callable $next next flow function
  * @return \Closure flow function
  */
 function makeFlowFunction($function) {
