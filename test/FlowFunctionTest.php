@@ -185,6 +185,18 @@ class FlowFunctionTest extends PHPUnit_Framework_TestCase {
     $this->assertSame(["next_called" => "ok"], $result);
   }
 
+  public function testNextMergesArgumentsAndPreviousResult() {
+    $flowFunction = FlowFunction::make(function($x, $next) {
+      return $next(["y" => 2]);
+    });
+    $next = FlowFunction::make(function($arguments) {
+      $this->assertSame(["y" => 2, "x" => 1], $arguments);
+      return ["next_called" => "ok"];
+    });
+    $result = $flowFunction(["x" => 1], $next);
+    $this->assertSame(["next_called" => "ok", "y" => 2, "x" => 1], $result);
+  }
+
   public function testCall() {
     $result = FlowFunction::call(function($x) {
       return ["y" => 2];

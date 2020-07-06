@@ -53,10 +53,16 @@ class FlowFunction {
  * @see https://bugs.php.net/bug.php?id=68792
  * Use FlowFunction::make() instead.
  * @param callable $function
+ * @param callable $next next flow function
  * @return \Closure flow function
  */
 function makeFlowFunction($function) {
   return function(array $arguments = [], callable $next = null) use ($function) {
+    if ($next === null) {
+      $next = function(array $arguments) {
+        return $arguments;
+      };
+    }
     $reflection = FlowFunction::reflectionCallable($function);
     $named_arguments = [];
     $take_next = false;
@@ -67,7 +73,9 @@ function makeFlowFunction($function) {
       }
       elseif ($parameter_name == "next") {
         $take_next = true;
-        $named_arguments[] = $next;
+        $named_arguments[] = function(array $previous_result = []) use ($next, $arguments) {
+          return $next($previous_result + $arguments);
+        };
       }
       else {
         $named_arguments[] = @$arguments[$parameter_name];
@@ -84,7 +92,7 @@ function makeFlowFunction($function) {
       ));
     }
     $result = (array)$result + $arguments;
-    if (!$take_next && $next) {
+    if (!$take_next) {
       $result = $next($result);
     }
     return $result;
